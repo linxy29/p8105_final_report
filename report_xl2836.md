@@ -32,51 +32,16 @@ This data includes 1433 observations and 63 variables.
 
 ``` r
 library(tidyverse)
-```
-
-    ## Warning: package 'tidyverse' was built under R version 3.4.4
-
-    ## Warning: package 'ggplot2' was built under R version 3.4.4
-
-    ## Warning: package 'tibble' was built under R version 3.4.4
-
-    ## Warning: package 'tidyr' was built under R version 3.4.4
-
-    ## Warning: package 'readr' was built under R version 3.4.4
-
-    ## Warning: package 'purrr' was built under R version 3.4.4
-
-    ## Warning: package 'dplyr' was built under R version 3.4.4
-
-    ## Warning: package 'stringr' was built under R version 3.4.4
-
-    ## Warning: package 'forcats' was built under R version 3.4.4
-
-``` r
 library(tidytext)
+library(modelr)
+library(mgcv)
 ```
-
-    ## Warning: package 'tidytext' was built under R version 3.4.4
 
 First, we should import data.
 
 ``` r
 mentalhealth_2016_df = read_csv("./data/mental_health_in_tech_2016.csv") 
 ```
-
-    ## Parsed with column specification:
-    ## cols(
-    ##   .default = col_character(),
-    ##   `Are you self-employed?` = col_integer(),
-    ##   `Is your employer primarily a tech company/organization?` = col_integer(),
-    ##   `Is your primary role within your company related to tech/IT?` = col_integer(),
-    ##   `Do you have medical coverage (private insurance or state-provided) which includes treatment of  mental health issues?` = col_integer(),
-    ##   `Do you have previous employers?` = col_integer(),
-    ##   `Have you ever sought treatment for a mental health issue from a mental health professional?` = col_integer(),
-    ##   `What is your age?` = col_integer()
-    ## )
-
-    ## See spec(...) for full column specifications.
 
 Variables name in this data set are questions, so we change it to [short words](Variable%20name.pdf) for easy-reading.
 
@@ -108,10 +73,8 @@ mentalhealth_2016_tidied =
          gender = str_replace(gender, "^male$", "Male"))
 ```
 
-    ## Warning: package 'bindrcpp' was built under R version 3.4.4
-
 Exploratory Analysis
-====================
+--------------------
 
 For exploratory analysis, we did summary for gender and the working location of participants. We also create the age distribution and the plot suggests that most participants are between 30 to 40 years old. In addition, we create a table to visualize the difficulty level for asking medical leave for people working in tech companies.
 
@@ -123,9 +86,11 @@ mentalhealth_2016_df %>%
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
+### Difficulty level of asking medical leave
+
 ``` r
 attach(mentalhealth_2016_df)
-#### table for medical leave difficulty
+
 leave = summary(as.factor(medical_leave)) %>% as.data.frame() 
 leave = cbind(rownames(leave), leave)
 rownames(leave) = NULL
@@ -147,6 +112,8 @@ leave %>%  knitr::kable()
 
 Bar graph was created to visualize the effect of company size on number of cases.
 
+### Effect of company size on number of cases.
+
 ``` r
 mentalhealth_2016_tidied %>% 
   filter(mental_health_now == "Yes" | mental_health_now == "No") %>% 
@@ -158,9 +125,9 @@ mentalhealth_2016_tidied %>%
 
 In addition, we use tidytext to explore the reason of people having mental health interview. We use unnest\_tokens to split sentences to words and use stop\_words to filter the useful words. We present the top 20 common words in a bar graph. However, the results still include many useless words, such as mental, health, and job. Therefore, we decide to not include this plot on our website.
 
-``` r
-### mental_health_interview_reason
+### Mental health interview reason
 
+``` r
 MH_interview_reason_inspec = mentalhealth_2016_df %>% 
   filter(tech_company == 1) 
 MH_interview_reason_inspec= MH_interview_reason_inspec %>% 
@@ -169,11 +136,7 @@ MH_interview_reason_inspec= MH_interview_reason_inspec %>%
 data(stop_words)
 MH_interview_reason_inspec  = 
   anti_join(MH_interview_reason_inspec, stop_words) 
-```
 
-    ## Joining, by = "word"
-
-``` r
 MH_interview_reason_inspec  %>% count(word, sort = TRUE) %>% 
   top_n(20) %>% 
   mutate(word = fct_reorder(word, n)) %>% 
@@ -181,8 +144,6 @@ MH_interview_reason_inspec  %>% count(word, sort = TRUE) %>%
   geom_bar(stat = "identity", fill = "blue", alpha = 0.6) +
   coord_flip()
 ```
-
-    ## Selecting by n
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
@@ -197,6 +158,8 @@ df = mentalhealth_2016_df %>%
   select(ID, condition_diagnosed, seek_treatment) %>%
   mutate(condition_diagnosed = str_split(condition_diagnosed, "\\|")) %>% unnest(condition_diagnosed) 
 ```
+
+### Mental heath condition VS. seeking treatment
 
 To create the plot of the mental heath condition VS. seeking treatment, we calculated the log odds ratio. The positive log odds ratio indicates more people seeking treatment compared to people do not seek treatment.
 
@@ -231,6 +194,8 @@ ratios %>%
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
+### Work interference on treated and untreated people
+
 For working interference plot, we set score for participants’ response and use facet\_wrap to compare the work interference when people get treated and when people do not get treatment.From this plot, we can observe the improvement for all kinds of disorders when people get treatment.
 
 ``` r
@@ -260,6 +225,192 @@ plot_1
 ```
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-11-1.png)
+
+We tried to build a model shows possible factors which might cause mental health disorder. First, we exclude variables which describe influence of mental health disorders or benefits about mental health disorders. Besides, `mental_health_now` of most experiement subjects equals to `mental_health_previous`, which means collinearity among these two variables is high. So we also exclude `mental_health_previous` to prevent it from highly influencing results. After that, we defined experiement subjects have tech-related job when he or she works in tech-company or has tech-related jobs.
+
+Variables left include `mental_health_now` which is our interested variable and possible factors `num_employees`, `tech`, `family_history`, `age`, `gender`, `work_remotely`.
+
+### Model building
+
+Since all possible factors except for `age` are categorical variables, using linear regression might cause too much interaction, so we use conditional inference tree and decision tree to build our model.
+
+#### Conditional inference tree
+
+First, we seperate original data to train data and test data.
+
+``` r
+library(party)
+
+set.seed(3)
+
+index <- sample(2,nrow(mental_data_fit),replace = TRUE,prob = c(0.7,0.3))
+traindata <- mental_data_fit[index == 1,]
+testdata <- mental_data_fit[index == 2,]
+```
+
+Then, we use train data to build model and the result is shown as follows.
+
+``` r
+fitted_ctree <- ctree(mental_health_now ~ ., data = traindata)
+plot(fitted_ctree, main = "Conditional Inference Tree")
+```
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+Conditional inference tree is built based on significant level, so those which give more information about response are shown first. According to the result, family history has huge influence in mental health disorders followed by gender and number of employees in the working company in different branches.
+
+Finally, we use test data to test model and sensitivity and specificity are shown below.
+
+``` r
+ctree.pred <- predict(fitted_ctree, testdata, type = "response")
+table(testdata$mental_health_now, ctree.pred, 
+                    dnn = c("Actual", "Predicted")) %>% 
+  knitr::kable()
+```
+
+|     |   No|  Yes|
+|-----|----:|----:|
+| No  |   80|   63|
+| Yes |   23|   95|
+
+``` r
+library(caret)
+
+#confusionMatrix(table(ctree.pred,testdata$mental_health_now))
+
+ctree_term = confusionMatrix(table(ctree.pred,testdata$mental_health_now)) %>% 
+  broom::tidy() %>% 
+  filter(term == "sensitivity" | term == "specificity") %>% 
+  select(term, estimate) %>% 
+  rename(ctree_estimate = estimate)
+
+ctree_term %>% 
+  knitr::kable()
+```
+
+| term        |  ctree\_estimate|
+|:------------|----------------:|
+| sensitivity |        0.5594406|
+| specificity |        0.8050847|
+
+We use cross-validation to do further test and gets means of sensitivity and specificity.
+
+``` r
+cv_df =
+  crossv_mc(mental_data_fit, 100) %>% 
+  mutate(train = map(train, as_tibble),
+         test = map(test, as_tibble))
+
+tree_term = function(tree_pred, test) {
+  confusionMatrix(table(tree_pred,test$mental_health_now)) %>% 
+  broom::tidy() %>% 
+  filter(term == "sensitivity" | term == "specificity") %>% 
+  select(term, estimate)}
+
+ctree_cv_df = 
+  cv_df %>% 
+  mutate(ctree_mod  = map(train, ~ctree(mental_health_now ~ ., data = .x))) %>% 
+  mutate(ctree_pred = map2(ctree_mod, test, ~predict(.x, .y, type = "response")),
+         tree_term = map2(ctree_pred, test, ~tree_term(tree_pred = .x, test = .y))) %>% 
+  unnest(tree_term) %>% 
+  group_by(term) %>% 
+  summarise(mean = mean(estimate)) %>% 
+  rename(ctree_mean = mean)
+
+ctree_cv_df %>% knitr::kable()
+```
+
+| term        |  ctree\_mean|
+|:------------|------------:|
+| sensitivity |    0.5924059|
+| specificity |    0.8019372|
+
+#### Decision tree
+
+First, we seperate original data to train data and test data.
+
+``` r
+library(rpart)
+library(rpart.plot)
+
+set.seed(13)
+ 
+index <- sample(2,nrow(mental_data_fit),replace = TRUE,prob = c(0.7,0.3))
+traindata <- mental_data_fit[index == 1,]
+testdata <- mental_data_fit[index == 2,]
+```
+
+Then, we use train data to build model and the result is shown as follows.
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-18-1.png)
+
+Decision inference tree is built based on information measures, so those which are more significant are shown first. According to the result, family history also has huge influence in mental health disorders and is followed by number of employees in the working company in different branches when experimental subject didn't know their family history.
+
+Finally, we use test data to test model and its sensitivity and specificity are shown below.
+
+``` r
+dtree_pred <- predict(object = fitted_dtree,newdata = testdata,type = 'class')
+table(dtree_pred, testdata$mental_health_now) %>% knitr::kable()
+```
+
+|     |   No|  Yes|
+|-----|----:|----:|
+| No  |   86|   22|
+| Yes |   46|  104|
+
+``` r
+#confusionMatrix(table(dtree_pred,testdata$mental_health_now))
+
+dtree_term = confusionMatrix(table(dtree_pred,testdata$mental_health_now)) %>% 
+  broom::tidy() %>% 
+  filter(term == "sensitivity" | term == "specificity") %>% 
+  select(term, estimate) %>% 
+  rename(dtree_estimate = estimate)
+
+dtree_term %>% knitr::kable()
+```
+
+| term        |  dtree\_estimate|
+|:------------|----------------:|
+| sensitivity |        0.6515152|
+| specificity |        0.8253968|
+
+We use cross-validation to do further test and get means of sensitivity and specificity.
+
+``` r
+cv_df =
+  crossv_mc(mental_data_fit, 100) %>% 
+  mutate(train = map(train, as_tibble),
+         test = map(test, as_tibble))
+
+dtree_cv_df = 
+  cv_df %>% 
+  mutate(dtree_mod  = map(train, ~rpart(formula = mental_health_now ~ ., data = .x, method = 'class'))) %>% 
+  mutate(dtree_pred = map2(dtree_mod, test, ~predict(.x, .y, type = "class")),
+         tree_term = map2(dtree_pred, test, ~tree_term(tree_pred = .x, test = .y))) %>% 
+  unnest(tree_term) %>% 
+  group_by(term) %>% 
+  summarise(mean = mean(estimate)) %>% 
+  rename(dtree_mean = mean)
+
+dtree_cv_df %>% knitr::kable()
+```
+
+| term        |  dtree\_mean|
+|:------------|------------:|
+| sensitivity |    0.6216378|
+| specificity |    0.8019542|
+
+``` r
+inner_join(ctree_cv_df, dtree_cv_df) %>% knitr::kable()
+```
+
+| term        |  ctree\_mean|  dtree\_mean|
+|:------------|------------:|------------:|
+| sensitivity |    0.5924059|    0.6216378|
+| specificity |    0.8019372|    0.8019542|
+
+Comparing cross-validation results of conditional inference tree and decision tree, two models have similar sensitivity and specificity and both sensitivity are smaller than specificity.
 
 Discussion
 ----------
