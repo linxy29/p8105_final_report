@@ -3,14 +3,15 @@ title: "Report"
 date: "12/5/2018"
 output: github_document
 ---
-###Motivation
+
+## Motivation
 The purpose of this project is to apply the skills we learnt in “Data Science I” to access data in real world setting and preferably make some impact on a concerning public health issue. In this case, we choose to analyze the mental health data gathered from an online survey done by OSMI, and hope our report could promote workplace mental health awareness and be used as reference by job seeker while job haunting. However, after exploring our data, we found that we aren’t able to answers some question we listed in the proposal, since our data is very limited.
 
-###Related work
+## Related work
 
 Mental health has always been an interesting topic since it is closely related to our life, 20 percent of the total population have diagnosable mental disorder, also, recent study showed that graduate student are at more risk of depression. Therefore, while browsing Kaggle, the challenge of mental health in tech companies immediately draw our attention. As future biostatistician, It is highly possible that we will pursue a tech career. And knowing whether particular work type is more stressful, if some factor are more associated with depression, will help guide us through the job seeking process and maybe even provide some help when others are facing mental health issues.
 
-###Initial questions
+## Initial questions
 
 Initially, we want to answer the following questions: Do mental health illness and attitudes towards mental health vary by geographic location? How strong is the association between family history and mental health illness or other predictors? Attitudes toward mental health VS attitudes toward physical health consequence? Do tech companies provide more or less mental health benefits compared to non-tech company?
 
@@ -29,13 +30,13 @@ This data includes 1433 observations and 63 variables.
 
 ### Data cleaning
 
-```{r}
+```{r, message = FALSE}
 library(tidyverse)
 ```
 
 First, we should import data.
 
-```{r}
+```{r, warning=FALSE}
 mentalhealth_2016_df = read_csv("./data/mental_health_in_tech_2016.csv") 
 ```
 
@@ -67,7 +68,12 @@ mentalhealth_2016_tidied =
          gender = str_replace(gender, "^[Mm]an$", "Male"),
          #gender = str_replace(gender, "^man$", "Male"),
          gender = str_replace(gender, "^male$", "Male"))
-
-head(mentalhealth_2016_df)
 ```
 
+## Discussion
+
+The dataset we conclude in this project contains all aspects of questions regarding mental health issues. Using the data and model building process, we find out that family history and the numbers of employees have relationship with existence of mental health disorders. 
+
+The plots in our project shows that people with personality disorder are less likely to actively seek treatment compared to people with post-traumatic stress disorder. The violin plot shows that for all kinds of disorders treatment can improve their mental health situation.
+
+The first limitation of the project is that the data set we include is not large enough. Participants mostly lives in US so we cannot generate the conclusion in global scale. The second limitation of our project is that we fail to test the relationship between gender and mental health status since participants using different kinds of gender-identify strategies.

@@ -2,15 +2,18 @@ Report
 ================
 12/5/2018
 
-### Motivation
+Motivation
+----------
 
 The purpose of this project is to apply the skills we learnt in “Data Science I” to access data in real world setting and preferably make some impact on a concerning public health issue. In this case, we choose to analyze the mental health data gathered from an online survey done by OSMI, and hope our report could promote workplace mental health awareness and be used as reference by job seeker while job haunting. However, after exploring our data, we found that we aren’t able to answers some question we listed in the proposal, since our data is very limited.
 
-### Related work
+Related work
+------------
 
 Mental health has always been an interesting topic since it is closely related to our life, 20 percent of the total population have diagnosable mental disorder, also, recent study showed that graduate student are at more risk of depression. Therefore, while browsing Kaggle, the challenge of mental health in tech companies immediately draw our attention. As future biostatistician, It is highly possible that we will pursue a tech career. And knowing whether particular work type is more stressful, if some factor are more associated with depression, will help guide us through the job seeking process and maybe even provide some help when others are facing mental health issues.
 
-### Initial questions
+Initial questions
+-----------------
 
 Initially, we want to answer the following questions: Do mental health illness and attitudes towards mental health vary by geographic location? How strong is the association between family history and mental health illness or other predictors? Attitudes toward mental health VS attitudes toward physical health consequence? Do tech companies provide more or less mental health benefits compared to non-tech company?
 
@@ -31,25 +34,11 @@ This data includes 1433 observations and 63 variables.
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ──────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
-
-    ## ✔ ggplot2 3.1.0     ✔ purrr   0.2.5
-    ## ✔ tibble  1.4.2     ✔ dplyr   0.7.8
-    ## ✔ tidyr   0.8.2     ✔ stringr 1.3.1
-    ## ✔ readr   1.1.1     ✔ forcats 0.3.0
-
-    ## ── Conflicts ─────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-
 First, we should import data.
 
 ``` r
 mentalhealth_2016_df = read_csv("./data/mental_health_in_tech_2016.csv") 
 ```
-
-    ## Warning: Duplicated column names deduplicated: 'Why or why not?' => 'Why or
-    ## why not?_1' [40]
 
     ## Parsed with column specification:
     ## cols(
@@ -93,46 +82,13 @@ mentalhealth_2016_tidied =
          gender = str_replace(gender, "^[Mm]an$", "Male"),
          #gender = str_replace(gender, "^man$", "Male"),
          gender = str_replace(gender, "^male$", "Male"))
-
-head(mentalhealth_2016_df)
 ```
 
-    ## # A tibble: 6 x 63
-    ##   self_employed num_employees tech_company tech_role benefits care_options
-    ##           <int> <chr>                <int>     <int> <chr>    <chr>       
-    ## 1             0 26-100                   1        NA Not eli… N/A         
-    ## 2             0 6-25                     1        NA No       Yes         
-    ## 3             0 6-25                     1        NA No       N/A         
-    ## 4             1 <NA>                    NA        NA <NA>     <NA>        
-    ## 5             0 6-25                     0         1 Yes      Yes         
-    ## 6             0 More than 10…            1        NA Yes      I am not su…
-    ## # ... with 57 more variables: employer_discussion <chr>,
-    ## #   employer_help <chr>, anonymity <chr>, medical_leave <chr>,
-    ## #   mental_health_consequences <chr>, physical_health_consequences <chr>,
-    ## #   coworkers_discussion <chr>, supervisor_discussion <chr>,
-    ## #   mental_vs_physical <chr>, obs_consequence <chr>,
-    ## #   medical_coverage <int>, help_resourcces <chr>,
-    ## #   whether_reveal_business_contacts <chr>,
-    ## #   reveal_concequences_business_contects <chr>,
-    ## #   whether_reveal_coworkers <chr>, reveal_concequences_coworkers <chr>,
-    ## #   productivity_affect <chr>, work_time_affected <chr>,
-    ## #   preemployers <int>, preemployers_benefits <chr>,
-    ## #   preemployers_care_options <chr>, preemployers_discussion <chr>,
-    ## #   preemployer_help <chr>, pre_anonymity <chr>,
-    ## #   pre_mental_health_consequences <chr>,
-    ## #   pre_physical_health_consequences <chr>,
-    ## #   pre_coworkers_discussion <chr>, pre_supervisors_discussion <chr>,
-    ## #   pre_mental_vs_physical <chr>, pre_obs_consequence <chr>,
-    ## #   physical_health_interview <chr>,
-    ## #   physical_health_interview_reason <chr>, mental_health_interview <chr>,
-    ## #   mental_health_interview_reason <chr>, career_influence <chr>,
-    ## #   coworkers_view <chr>, friends_family_share <chr>,
-    ## #   unsupportive_badly_handled <chr>, less_likely_reveal <chr>,
-    ## #   family_history <chr>, mental_health_previous <chr>,
-    ## #   mental_health_now <chr>, condition_diagnosed <chr>,
-    ## #   possible_condition <chr>, professional_diagnosed <chr>,
-    ## #   condition_professional_diagnosed <chr>, seek_treatment <int>,
-    ## #   work_interferes_treated <chr>, work_interferes_untreated <chr>,
-    ## #   age <int>, gender <chr>, country_live <chr>, territory_live <chr>,
-    ## #   country_work <chr>, territory_work <chr>, work_position_kind <chr>,
-    ## #   work_remotely <chr>
+Discussion
+----------
+
+The dataset we conclude in this project contains all aspects of questions regarding mental health issues. Using the data and model building process, we find out that family history and the numbers of employees have relationship with existence of mental health disorders.
+
+The plots in our project shows that people with personality disorder are less likely to actively seek treatment compared to people with post-traumatic stress disorder. The violin plot shows that for all kinds of disorders treatment can improve their mental health situation.
+
+The first limitation of the project is that the data set we include is not large enough. Participants mostly lives in US so we cannot generate the conclusion in global scale. The second limitation of our project is that we fail to test the relationship between gender and mental health status since participants using different kinds of gender-identify strategies.
