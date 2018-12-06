@@ -19,15 +19,15 @@ For the second question, since mental health illness is a categorical variable, 
 Although some of the question are not accessible, we found other interesting trend while exploring, such as the impact of work performance of mental health illness treatment, and people with particular mental health disease are more willing to seek treatment than others, and these questions will be further discussed in the exploration analysis session of the report.
 
 
-# Data
+## Data
 
-## Data Source
+### Data Source
 
 Our [data](https://www.kaggle.com/osmi/mental-health-in-tech-2016/downloads/mental-health-in-tech-2016.zip/1) comes from [OSMI Mental Health in Tech Survey](https://osmihelp.org/research/) which we first find in [kaggle](https://www.kaggle.com/osmi/mental-health-in-tech-2016).
 
 This data includes 1433 observations and 63 variables.
 
-## Data cleaning
+### Data cleaning
 
 ```{r}
 library(tidyverse)
