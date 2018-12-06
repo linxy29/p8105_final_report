@@ -5,19 +5,23 @@ Report
 Motivation
 ----------
 
-The purpose of this project is to apply the skills we learnt in “Data Science I” to access data in real world setting and preferably make some impact on a concerning public health issue. In this case, we choose to analyze the mental health data gathered from an online survey done by OSMI, and hope our report could promote workplace mental health awareness and be used as reference by job seeker while job haunting. However, after exploring our data, we found that we aren’t able to answers some question we listed in the proposal, since our data is very limited.
+The purpose of this project is to apply the skills we learnt in “Data Science I” to access data in real world setting and preferably make some impact on a concerning public health issue. In this case, we choose to analyze the mental health data gathered from an online survey collected by Openign Sourcing Mental Illness (OSMI), and hope our report could promote workplace mental health awareness and be used as reference by job seeker while job haunting. However, after exploring our data, we found that we aren’t able to answers some question we listed in the proposal, since our data is very limited.
 
 Related work
 ------------
 
-Mental health has always been an interesting topic since it is closely related to our life, 20 percent of the total population have diagnosable mental disorder, also, recent study showed that graduate student are at more risk of depression. Therefore, while browsing Kaggle, the challenge of mental health in tech companies immediately draw our attention. As future biostatistician, It is highly possible that we will pursue a tech career. And knowing whether particular work type is more stressful, if some factor are more associated with depression, will help guide us through the job seeking process and maybe even provide some help when others are facing mental health issues.
+Mental health has always been an interesting topic since it is closely related to our life. According to research, 20 percent of the total population have diagnosable mental disorder. Also, recent study showed that graduate student are at more risk of depression. Therefore, while browsing Kaggle, the challenge of mental health in tech companies immediately draw our attention. As future biostatistician, It is highly possible that we will pursue a tech career in the future. And knowing whether particular work type is more stressful, if some factor are more associated with depression, will help guide us through the job seeking process and maybe even provide some help when others are facing mental health issues.
 
 Initial questions
 -----------------
 
 Initially, we want to answer the following questions: Do mental health illness and attitudes towards mental health vary by geographic location? How strong is the association between family history and mental health illness or other predictors? Attitudes toward mental health VS attitudes toward physical health consequence? Do tech companies provide more or less mental health benefits compared to non-tech company?
 
-After exploring the data, we found that the we are not able to answer the latter two of our proposed question, since most of the participant in the survey are either from a tech company or is working as a tech in non-tech company. Also, the attitude towards mental health are very difficult to access since the questionnaire is asking what do participant think that their company would react if they had mental health illness, and this information could be highly biased since there is no standard measure. Instead, we decide to look into the number of people with mental health disorder vary by geographic location, and found that in general around 50% of participant of the survey is currently having mental health issue. Some states have higher percentage than other, but since some states only have one or two people who take the survey, those states tend to have extreme values like 100% or 0 %. For the second question, since mental health illness is a categorical variable, we are unable to use it as a response variable within a linear model. Therefore, we performed conditional inference tree and decision tree to analyze the data, and found family history of mental health illness and the size of the company is associated with current mental health illness. Although some of the question are not accessible, we found other interesting trend while exploring, such as the impact of work performance of mental health illness treatment, and people with particular mental health disease are more willing to seek treatment than others, and these questions will be further discussed in the exploration analysis session of the report.
+After exploring the data, we found that the we are not able to answer the latter two of our proposed question, since most of the participant in the survey are either from a tech company or is working as a tech in non-tech company. Also, the attitude towards mental health are very difficult to access since the questionnaire is asking what do participant think that their company would react if they had mental health illness, and this information could be highly biased as it is purely subjective. Instead, we decide to look into the number of people with mental health disorder vary by geographic location, and found that in general around 50% of participant of the survey is currently having mental health issue. Some states have higher percentage than other, but since some states only have one or two people who take the survey, those states tend to have extreme values like 100% or 0 %.
+
+For the second question, since mental health illness is a categorical variable, we are unable to use it as a response variable within a linear model. Therefore, we performed conditional inference tree and decision tree to analyze the data, and found family history of mental health illness and the size of the company is associated with current mental health illness.
+
+Although some of the question are not accessible, we found other interesting trend while exploring, such as the impact of work performance of mental health illness treatment, and people with particular mental health disease are more willing to seek treatment than others, and these questions will be further discussed in the exploration analysis session of the report.
 
 Data
 ----
@@ -43,7 +47,7 @@ First, we should import data.
 mentalhealth_2016_df = read_csv("./data/mental_health_in_tech_2016.csv") 
 ```
 
-Variables name in this data set are questions, so we change it to [short words](Variable%20name.pdf) for easy-reading.
+Variables name in this dataset are questions directly quoted from the survey, so we change it to [short words](Variable%20name.pdf) to improve readability.
 
 ``` r
 colnames(mentalhealth_2016_df) <- c("self_employed", "num_employees", "tech_company", "tech_role", "benefits", "care_options", "employer_discussion", "employer_help", "anonymity", "medical_leave", "mental_health_consequences", "physical_health_consequences", "coworkers_discussion", "supervisor_discussion", "mental_vs_physical", "obs_consequence", "medical_coverage", "help_resourcces", "whether_reveal_business_contacts", "reveal_concequences_business_contects", "whether_reveal_coworkers", "reveal_concequences_coworkers", "productivity_affect", "work_time_affected", "preemployers", "preemployers_benefits", "preemployers_care_options", "preemployers_discussion", "preemployer_help", "pre_anonymity", "pre_mental_health_consequences", "pre_physical_health_consequences", "pre_coworkers_discussion", "pre_supervisors_discussion", "pre_mental_vs_physical", "pre_obs_consequence", "physical_health_interview", "physical_health_interview_reason", "mental_health_interview", "mental_health_interview_reason", "career_influence", "coworkers_view", "friends_family_share", "unsupportive_badly_handled", "less_likely_reveal", "family_history", "mental_health_previous", "mental_health_now", "condition_diagnosed", "possible_condition", "professional_diagnosed", "condition_professional_diagnosed", "seek_treatment", "work_interferes_treated", "work_interferes_untreated", "age", "gender", "country_live", "territory_live", "country_work", "territory_work", "work_position_kind", "work_remotely")
@@ -147,7 +151,7 @@ MH_interview_reason_inspec  %>% count(word, sort = TRUE) %>%
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
-To further explore mental health disorder, we create another two plots describing the mental heath condition VS. seeking treatment and the interference of alternative mental health disease on working performance. Most participants have more than one kind of mental health disorder.Therefore, I add a ID column and use stri\_split and then unnest the variable condition\_diagonsed. We filtered the most common mental health disorders with group\_by condition\_diagnosed and summarise by count.
+To further explore mental health disorder, we create other two plots describing the mental heath condition VS. seeking treatment and the interference of alternative mental health disease on working performance. Most participants have more than one kind of mental health disorder.Therefore, I add a ID column and use stri\_split and then unnest the variable condition\_diagonsed. We filtered the most common mental health disorders with group\_by condition\_diagnosed and summarise by count.
 
 ``` r
 # add_id
@@ -196,7 +200,7 @@ ratios %>%
 
 ### Work interference on treated and untreated people
 
-For working interference plot, we set score for participants’ response and use facet\_wrap to compare the work interference when people get treated and when people do not get treatment.From this plot, we can observe the improvement for all kinds of disorders when people get treatment.
+For working interference plot, we set score for participants’ response and use facet\_wrap to compare the work interference when people get treated and when people do not get treatment. From this plot, we can observe the improvement for all kinds of disorders when people get treatment.
 
 ``` r
 work_if = mentalhealth_2016_df %>% 
@@ -226,9 +230,13 @@ plot_1
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
-We tried to build a model shows possible factors which might cause mental health disorder. First, we exclude variables which describe influence of mental health disorders or benefits about mental health disorders. Besides, `mental_health_now` of most experiement subjects equals to `mental_health_previous`, which means collinearity among these two variables is high. So we also exclude `mental_health_previous` to prevent it from highly influencing results. After that, we defined experiement subjects have tech-related job when he or she works in tech-company or has tech-related jobs.
+We tried to build a model shows possible factors which might cause mental health disorder. First, we excluded variables which describe influence of mental health disorders or benefits about mental health disorders. Besides, `mental_health_now` of most experiment subjects equals to `mental_health_previous`, which means collinearity among these two variables is high. So we also exclude `mental_health_previous` to prevent it from highly influencing results. After that, we defined experiment subjects to have tech-related job when he or she works in tech-company or has tech-related jobs.
 
 Variables left include `mental_health_now` which is our interested variable and possible factors `num_employees`, `tech`, `family_history`, `age`, `gender`, `work_remotely`.
+
+### Map plots
+
+We also built plotly map which shows precentages of people with meantal health disorders in each state and a shiny map allows web users to select contries and mental health disorders to see distributions they are interested in.
 
 ### Model building
 
@@ -236,7 +244,7 @@ Since all possible factors except for `age` are categorical variables, using lin
 
 #### Conditional inference tree
 
-First, we seperate original data to train data and test data.
+First, we separate original data to train data and test data.
 
 ``` r
 library(party)
@@ -257,9 +265,9 @@ plot(fitted_ctree, main = "Conditional Inference Tree")
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-14-1.png)
 
-Conditional inference tree is built based on significant level, so those which give more information about response are shown first. According to the result, family history has huge influence in mental health disorders followed by gender and number of employees in the working company in different branches.
+Conditional inference tree is built based on significant level, so those give more information about response are shown first. According to the result, family history has most influence in mental health disorders followed by gender and number of employees in the working company in different branches.
 
-Finally, we use test data to test model and sensitivity and specificity are shown below.
+Finally, we use test data to test model, and sensitivity and specificity are shown below.
 
 ``` r
 ctree.pred <- predict(fitted_ctree, testdata, type = "response")
@@ -327,7 +335,7 @@ ctree_cv_df %>% knitr::kable()
 
 #### Decision tree
 
-First, we seperate original data to train data and test data.
+First, we separate original data to train data and test data.
 
 ``` r
 library(rpart)
@@ -340,11 +348,11 @@ traindata <- mental_data_fit[index == 1,]
 testdata <- mental_data_fit[index == 2,]
 ```
 
-Then, we use train data to build model and the result is shown as follows.
+Then, we use train data to build model, and the result is shown as follows.
 
 ![](report_xl2836_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
-Decision inference tree is built based on information measures, so those which are more significant are shown first. According to the result, family history also has huge influence in mental health disorders and is followed by number of employees in the working company in different branches when experimental subject didn't know their family history.
+Decision inference tree is built based on information measures, so those are more significant are shown first. According to the result, family history also has huge influence in mental health disorders, number of employees in the company is also influencial given experimental subject had a family history of mental health disorder.
 
 Finally, we use test data to test model and its sensitivity and specificity are shown below.
 
@@ -415,8 +423,8 @@ Comparing cross-validation results of conditional inference tree and decision tr
 Discussion
 ----------
 
-The dataset we conclude in this project contains all aspects of questions regarding mental health issues. Using the data and model building process, we find out that family history and the numbers of employees have relationship with existence of mental health disorders.
+The dataset we include in this project contains all aspects of questions regarding mental health issues. Through model building process, we find out that family history and the number of employees have relationship with existence of mental health disorders.
 
 The plots in our project shows that people with personality disorder are less likely to actively seek treatment compared to people with post-traumatic stress disorder. The violin plot shows that for all kinds of disorders treatment can improve their mental health situation.
 
-The first limitation of the project is that the data set we include is not large enough. Participants mostly lives in US so we cannot generate the conclusion in global scale. The second limitation of our project is that we fail to test the relationship between gender and mental health status since participants using different kinds of gender-identify strategies.
+The first limitation of the project is that the dataset we include is not large enough. Participants mostly lives in US so we cannot generate the conclusion to global scale. The second limitation of our project is that we fail to test the relationship between gender and mental health status since participants used different kinds of gender-identify strategies.
