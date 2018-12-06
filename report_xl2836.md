@@ -34,6 +34,30 @@ This data includes 1433 observations and 63 variables.
 library(tidyverse)
 ```
 
+    ## Warning: package 'tidyverse' was built under R version 3.4.4
+
+    ## Warning: package 'ggplot2' was built under R version 3.4.4
+
+    ## Warning: package 'tibble' was built under R version 3.4.4
+
+    ## Warning: package 'tidyr' was built under R version 3.4.4
+
+    ## Warning: package 'readr' was built under R version 3.4.4
+
+    ## Warning: package 'purrr' was built under R version 3.4.4
+
+    ## Warning: package 'dplyr' was built under R version 3.4.4
+
+    ## Warning: package 'stringr' was built under R version 3.4.4
+
+    ## Warning: package 'forcats' was built under R version 3.4.4
+
+``` r
+library(tidytext)
+```
+
+    ## Warning: package 'tidytext' was built under R version 3.4.4
+
 First, we should import data.
 
 ``` r
@@ -83,6 +107,159 @@ mentalhealth_2016_tidied =
          #gender = str_replace(gender, "^man$", "Male"),
          gender = str_replace(gender, "^male$", "Male"))
 ```
+
+    ## Warning: package 'bindrcpp' was built under R version 3.4.4
+
+Exploratory Analysis
+====================
+
+For exploratory analysis, we did summary for gender and the working location of participants. We also create the age distribution and the plot suggests that most participants are between 30 to 40 years old. In addition, we create a table to visualize the difficulty level for asking medical leave for people working in tech companies.
+
+``` r
+mentalhealth_2016_df %>% 
+  ggplot(aes(x = age)) +
+  geom_density()
+```
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-5-1.png)
+
+``` r
+attach(mentalhealth_2016_df)
+#### table for medical leave difficulty
+leave = summary(as.factor(medical_leave)) %>% as.data.frame() 
+leave = cbind(rownames(leave), leave)
+rownames(leave) = NULL
+
+colnames(leave) = c("medical_leave_difficulty", "frequency")
+
+leave %>%  knitr::kable()
+```
+
+| medical\_leave\_difficulty |  frequency|
+|:---------------------------|----------:|
+| I don't know               |        150|
+| Neither easy nor difficult |        178|
+| Somewhat difficult         |        199|
+| Somewhat easy              |        281|
+| Very difficult             |        118|
+| Very easy                  |        220|
+| NA's                       |        287|
+
+Bar graph was created to visualize the effect of company size on number of cases.
+
+``` r
+mentalhealth_2016_tidied %>% 
+  filter(mental_health_now == "Yes" | mental_health_now == "No") %>% 
+  ggplot(aes(x = num_employees)) +
+  geom_bar(aes(fill = mental_health_now))
+```
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
+In addition, we use tidytext to explore the reason of people having mental health interview. We use unnest\_tokens to split sentences to words and use stop\_words to filter the useful words. We present the top 20 common words in a bar graph. However, the results still include many useless words, such as mental, health, and job. Therefore, we decide to not include this plot on our website.
+
+``` r
+### mental_health_interview_reason
+
+MH_interview_reason_inspec = mentalhealth_2016_df %>% 
+  filter(tech_company == 1) 
+MH_interview_reason_inspec= MH_interview_reason_inspec %>% 
+  unnest_tokens(word, mental_health_interview_reason)
+
+data(stop_words)
+MH_interview_reason_inspec  = 
+  anti_join(MH_interview_reason_inspec, stop_words) 
+```
+
+    ## Joining, by = "word"
+
+``` r
+MH_interview_reason_inspec  %>% count(word, sort = TRUE) %>% 
+  top_n(20) %>% 
+  mutate(word = fct_reorder(word, n)) %>% 
+  ggplot(aes(x = word, y = n)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.6) +
+  coord_flip()
+```
+
+    ## Selecting by n
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-8-1.png)
+
+To further explore mental health disorder, we create another two plots describing the mental heath condition VS. seeking treatment and the interference of alternative mental health disease on working performance. Most participants have more than one kind of mental health disorder.Therefore, I add a ID column and use stri\_split and then unnest the variable condition\_diagonsed. We filtered the most common mental health disorders with group\_by condition\_diagnosed and summarise by count.
+
+``` r
+# add_id
+mentalhealth_2016_df$ID = seq.int(nrow(mentalhealth_2016_df))
+
+# split Mental health disorders(for example, one person has several kinds of MH disorders)
+df = mentalhealth_2016_df %>% 
+  select(ID, condition_diagnosed, seek_treatment) %>%
+  mutate(condition_diagnosed = str_split(condition_diagnosed, "\\|")) %>% unnest(condition_diagnosed) 
+```
+
+To create the plot of the mental heath condition VS. seeking treatment, we calculated the log odds ratio. The positive log odds ratio indicates more people seeking treatment compared to people do not seek treatment.
+
+``` r
+ratios = df %>% 
+  group_by(condition_diagnosed, seek_treatment) %>% 
+  summarize(count = n()) %>%
+  filter(count >= 3) %>% 
+  mutate(seek_treatment = ifelse(seek_treatment == 1, "yes", "no")) %>% 
+  spread(seek_treatment, count, fill = 0) %>% janitor::clean_names() 
+
+ratios = 
+  ratios %>% 
+    mutate(
+    seek_treatment_odds = (yes + 1) / (sum(ratios$yes) + 1),
+    not_seek_treatment_odds = (no + 1) / (sum(ratios$no) + 1), 
+    log_OR = log(seek_treatment_odds / not_seek_treatment_odds)) %>% 
+  arrange(desc(log_OR))
+  
+ratios %>%
+  mutate(pos_log_OR = ifelse(log_OR > 0, "yes > no", "no > yes")) %>% 
+  group_by(pos_log_OR) %>%
+  top_n(15, abs(log_OR)) %>%
+  ungroup() %>%
+  mutate(word = fct_reorder(condition_diagnosed, log_OR)) %>%
+  ggplot(aes(word, log_OR, fill = pos_log_OR)) +
+  geom_col() +
+  coord_flip() +
+  ylab("log odds ratio (yes/no)") +
+  scale_fill_discrete(name = "")
+```
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+For working interference plot, we set score for participants’ response and use facet\_wrap to compare the work interference when people get treated and when people do not get treatment.From this plot, we can observe the improvement for all kinds of disorders when people get treatment.
+
+``` r
+work_if = mentalhealth_2016_df %>% 
+  select(ID, condition_diagnosed, work_interferes_treated, work_interferes_untreated) %>% 
+  mutate(condition_diagnosed = str_split(condition_diagnosed, "\\|")) %>% unnest(condition_diagnosed) %>%    
+  filter(!is.na(condition_diagnosed)) %>% 
+  mutate(work_interferes_treated = recode(work_interferes_treated ,"Not applicable to me" = 0, "Never" = 1, "Rarely" = 2, "Sometimes" = 3, "Often" = 4),
+        work_interferes_untreated = recode(work_interferes_untreated ,"Not applicable to me" = 0, "Never" = 1, "Rarely" = 2, "Sometimes" = 3, "Often" = 4)) %>% gather(key = "treat_or_not", value ="work_interference",work_interferes_treated:work_interferes_untreated) %>%  filter(work_interference != 0)
+
+common_disease = work_if %>%
+  group_by(condition_diagnosed) %>% 
+  summarise(count = n()) %>% 
+  mutate(condition_diagnosed = fct_reorder(condition_diagnosed, count)) %>% 
+  top_n(12, count) 
+
+### common disease: ggplot(aes(y =condition_diagnosed, x = count)) + geom_path()
+
+common_disease_list = common_disease$condition_diagnosed
+
+
+plot_1 = work_if %>% 
+  filter(condition_diagnosed %in% common_disease_list) %>% 
+  ggplot(aes(x = condition_diagnosed, y = work_interference)) + geom_violin() + facet_wrap(~treat_or_not) +
+  coord_flip() + labs(caption = "Set score for work interference of mental health disorder:  Never = 1, Rarely = 2, Sometimes = 3, Often = 4")
+plot_1
+```
+
+![](report_xl2836_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 Discussion
 ----------
